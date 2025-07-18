@@ -7,6 +7,7 @@ class VirtualCigarette {
     this.dragOffset = { x: 0, y: 0 };
     this.smokeInterval = null;
     this.currentAngle = 270;
+    this.smokeAmount = 5; // デフォルトの煙の量
     console.log('VirtualCigarette初期化開始, デフォルト角度:', this.currentAngle);
     this.init();
   }
@@ -15,8 +16,9 @@ class VirtualCigarette {
     this.createCigarette();
     this.setupEventListeners();
     this.setupMessageListener();
-    // ストレージからの読み込みを最後に行い、デフォルト角度を保護
+    // ストレージからの読み込みを最後に行い、デフォルト値を保護
     this.loadSavedAngleOrDefault();
+    this.loadSavedSmokeAmountOrDefault();
   }
 
   createCigarette() {
@@ -169,9 +171,16 @@ class VirtualCigarette {
   }
 
   startSmoking() {
+    // 煙の量に応じて生成間隔を調整
+    // 量が多いほど間隔が短くなる（1=300ms, 5=200ms, 10=100ms）
+    const baseInterval = 200;
+    const interval = Math.max(50, baseInterval - (this.smokeAmount - 1) * 20);
+    
     this.smokeInterval = setInterval(() => {
       this.createSmokeParticle();
-    }, 200);
+    }, interval);
+    
+    console.log(`煙の生成開始: 量=${this.smokeAmount}, 間隔=${interval}ms`);
   }
 
   stopSmoking() {
@@ -249,6 +258,10 @@ class VirtualCigarette {
         this.updateAngle(request.angle);
         sendResponse({success: true});
       }
+      if (request.action === 'updateSmokeAmount') {
+        this.updateSmokeAmount(request.smokeAmount);
+        sendResponse({success: true});
+      }
       return true;
     });
   }
@@ -270,11 +283,39 @@ class VirtualCigarette {
     });
   }
 
+  loadSavedSmokeAmountOrDefault() {
+    chrome.storage.sync.get(['smokeAmount'], (result) => {
+      console.log('ストレージから読み込んだ煙の量:', result.smokeAmount);
+      
+      if (result.smokeAmount !== undefined) {
+        console.log('保存された煙の量を適用:', result.smokeAmount);
+        this.updateSmokeAmount(result.smokeAmount);
+      } else {
+        console.log('初回起動: デフォルト煙の量5を設定してストレージに保存');
+        this.updateSmokeAmount(5);
+        chrome.storage.sync.set({smokeAmount: 5});
+      }
+    });
+  }
+
   updateAngle(angle) {
     console.log(`updateAngle呼び出し: ${this.currentAngle}度 → ${angle}度`);
     this.currentAngle = angle;
     this.cigarette.style.transform = `rotate(${angle}deg)`;
     console.log(`タバコの角度を${angle}度に変更しました`);
+  }
+
+  updateSmokeAmount(amount) {
+    console.log(`updateSmokeAmount呼び出し: ${this.smokeAmount} → ${amount}`);
+    this.smokeAmount = amount;
+    
+    // 煙を出している最中なら、新しい設定で再開
+    if (this.isSmoking) {
+      this.stopSmoking();
+      this.startSmoking();
+    }
+    
+    console.log(`煙の量を${amount}に変更しました`);
   }
 }
 
