@@ -67,15 +67,25 @@ class VirtualCigarette {
         const clickDuration = Date.now() - clickStartTime;
         if (!dragStarted && clickDuration < 200) {
           const rect = this.cigarette.getBoundingClientRect();
-          const clickY = e.clientY - rect.top;
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
           
-          // タバコの上部（先端）をクリックした場合は火をつける
-          if (clickY < 20) {
+          // クリック位置を中心からの相対位置に変換
+          const relativeX = e.clientX - centerX;
+          const relativeY = e.clientY - centerY;
+          
+          // 回転角度を考慮した座標変換
+          const angle = -this.currentAngle * Math.PI / 180;
+          const rotatedX = relativeX * Math.cos(angle) - relativeY * Math.sin(angle);
+          const rotatedY = relativeX * Math.sin(angle) + relativeY * Math.cos(angle);
+          
+          // 回転後の座標でクリック位置を判定
+          if (rotatedY < -20) {
+            // タバコの上部（先端）をクリック
             this.toggleLight();
             console.log('火をつけました/消しました');
-          }
-          // タバコの下部をクリックした場合は煙を出す
-          else if (clickY > 40) {
+          } else if (rotatedY > 20) {
+            // タバコの下部をクリック
             this.toggleSmoke();
             console.log('煙を出しました/止めました');
           }
@@ -83,20 +93,33 @@ class VirtualCigarette {
       }
     });
 
-    // キーボードイベント（念のため残しておく）
+    // キーボードイベント（メイン操作方法）
     document.addEventListener('keydown', (e) => {
-      console.log('キーが押されました:', e.key);
-      // Lキーで火をつける/消す
-      if (e.key.toLowerCase() === 'l') {
-        this.toggleLight();
-        console.log('Lキーで火をつけました/消しました');
+      // フォーカスされている要素がinput, textarea, select, contentEditableでない場合のみ実行
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.tagName === 'SELECT' ||
+        activeElement.isContentEditable
+      );
+      
+      if (!isInputFocused) {
+        console.log('キーが押されました:', e.key);
+        // Lキーで火をつける/消す
+        if (e.key.toLowerCase() === 'l') {
+          e.preventDefault();
+          this.toggleLight();
+          console.log('Lキーで火をつけました/消しました');
+        }
+        // Sキーで煙を出す/止める
+        if (e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          this.toggleSmoke();
+          console.log('Sキーで煙を出しました/止めました');
+        }
       }
-      // Sキーで煙を出す/止める
-      if (e.key.toLowerCase() === 's') {
-        this.toggleSmoke();
-        console.log('Sキーで煙を出しました/止めました');
-      }
-    });
+    }, true); // キャプチャフェーズで実行
 
     // ウィンドウリサイズ時の位置調整
     window.addEventListener('resize', () => {
