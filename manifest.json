@@ -4,8 +4,13 @@
   "version": "1.0",
   "description": "かっこいいタバコを再現して、マウスでグリグリ動かして好きな場所でタバコが吸える拡張機能",
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Virtual Cigarette Settings"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

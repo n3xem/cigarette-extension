@@ -6,12 +6,15 @@ class VirtualCigarette {
     this.isSmoking = false;
     this.dragOffset = { x: 0, y: 0 };
     this.smokeInterval = null;
+    this.currentAngle = 0;
     this.init();
   }
 
   init() {
     this.createCigarette();
     this.setupEventListeners();
+    this.setupMessageListener();
+    this.loadSavedAngle();
   }
 
   createCigarette() {
@@ -23,8 +26,14 @@ class VirtualCigarette {
   }
 
   setupEventListeners() {
+    let clickStartTime = 0;
+    let dragStarted = false;
+
     // マウスでのドラッグ機能
     this.cigarette.addEventListener('mousedown', (e) => {
+      clickStartTime = Date.now();
+      dragStarted = false;
+      
       this.isDragging = true;
       this.cigarette.classList.add('dragging');
       
@@ -37,6 +46,10 @@ class VirtualCigarette {
 
     document.addEventListener('mousemove', (e) => {
       if (this.isDragging) {
+        if (!dragStarted) {
+          dragStarted = true;
+        }
+        
         const x = e.clientX - this.dragOffset.x;
         const y = e.clientY - this.dragOffset.y;
         
@@ -45,22 +58,43 @@ class VirtualCigarette {
       }
     });
 
-    document.addEventListener('mouseup', () => {
+    document.addEventListener('mouseup', (e) => {
       if (this.isDragging) {
         this.isDragging = false;
         this.cigarette.classList.remove('dragging');
+        
+        // ドラッグではなく短時間のクリックの場合
+        const clickDuration = Date.now() - clickStartTime;
+        if (!dragStarted && clickDuration < 200) {
+          const rect = this.cigarette.getBoundingClientRect();
+          const clickY = e.clientY - rect.top;
+          
+          // タバコの上部（先端）をクリックした場合は火をつける
+          if (clickY < 20) {
+            this.toggleLight();
+            console.log('火をつけました/消しました');
+          }
+          // タバコの下部をクリックした場合は煙を出す
+          else if (clickY > 40) {
+            this.toggleSmoke();
+            console.log('煙を出しました/止めました');
+          }
+        }
       }
     });
 
-    // キーボードイベント
+    // キーボードイベント（念のため残しておく）
     document.addEventListener('keydown', (e) => {
+      console.log('キーが押されました:', e.key);
       // Lキーで火をつける/消す
       if (e.key.toLowerCase() === 'l') {
         this.toggleLight();
+        console.log('Lキーで火をつけました/消しました');
       }
       // Sキーで煙を出す/止める
       if (e.key.toLowerCase() === 's') {
         this.toggleSmoke();
+        console.log('Sキーで煙を出しました/止めました');
       }
     });
 
@@ -80,8 +114,10 @@ class VirtualCigarette {
     this.isLit = !this.isLit;
     if (this.isLit) {
       this.cigarette.classList.add('lit');
+      console.log('火がつきました');
     } else {
       this.cigarette.classList.remove('lit');
+      console.log('火が消えました');
       // 火が消えたら煙も止める
       if (this.isSmoking) {
         this.toggleSmoke();
@@ -91,6 +127,7 @@ class VirtualCigarette {
 
   toggleSmoke() {
     if (!this.isLit) {
+      console.log('火がついていないので煙を出せません');
       return; // 火がついていない場合は煙を出さない
     }
 
@@ -98,8 +135,10 @@ class VirtualCigarette {
     
     if (this.isSmoking) {
       this.startSmoking();
+      console.log('煙を出し始めました');
     } else {
       this.stopSmoking();
+      console.log('煙を止めました');
     }
   }
 
@@ -141,6 +180,30 @@ class VirtualCigarette {
         particle.parentNode.removeChild(particle);
       }
     }, 3000);
+  }
+
+  setupMessageListener() {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'updateAngle') {
+        this.updateAngle(request.angle);
+        sendResponse({success: true});
+      }
+      return true;
+    });
+  }
+
+  loadSavedAngle() {
+    chrome.storage.sync.get(['cigaretteAngle'], (result) => {
+      if (result.cigaretteAngle !== undefined) {
+        this.updateAngle(result.cigaretteAngle);
+      }
+    });
+  }
+
+  updateAngle(angle) {
+    this.currentAngle = angle;
+    this.cigarette.style.transform = `rotate(${angle}deg)`;
+    console.log(`タバコの角度を${angle}度に変更しました`);
   }
 }
 

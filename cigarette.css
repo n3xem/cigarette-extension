@@ -7,8 +7,9 @@
   z-index: 999999;
   cursor: move;
   user-select: none;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transform-origin: center center;
 }
 
 .virtual-cigarette::before {
