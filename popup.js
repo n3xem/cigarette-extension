@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 現在の角度を取得して表示
     chrome.storage.sync.get(['cigaretteAngle'], function(result) {
-        const currentAngle = result.cigaretteAngle || 0;
+        const currentAngle = result.cigaretteAngle !== undefined ? result.cigaretteAngle : 270;
         angleSlider.value = currentAngle;
         updateAngleDisplay(currentAngle);
     });
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // リセットボタンの処理
     resetBtn.addEventListener('click', function() {
-        const angle = 0;
+        const angle = 270;
         angleSlider.value = angle;
         updateAngleDisplay(angle);
         updateCigaretteAngle(angle);

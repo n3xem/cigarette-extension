@@ -6,7 +6,8 @@ class VirtualCigarette {
     this.isSmoking = false;
     this.dragOffset = { x: 0, y: 0 };
     this.smokeInterval = null;
-    this.currentAngle = 0;
+    this.currentAngle = 270;
+    console.log('VirtualCigarette初期化開始, デフォルト角度:', this.currentAngle);
     this.init();
   }
 
@@ -14,7 +15,8 @@ class VirtualCigarette {
     this.createCigarette();
     this.setupEventListeners();
     this.setupMessageListener();
-    this.loadSavedAngle();
+    // ストレージからの読み込みを最後に行い、デフォルト角度を保護
+    this.loadSavedAngleOrDefault();
   }
 
   createCigarette() {
@@ -22,6 +24,7 @@ class VirtualCigarette {
     this.cigarette.className = 'virtual-cigarette';
     this.cigarette.style.left = '50px';
     this.cigarette.style.top = '50px';
+    this.cigarette.style.transform = `rotate(${this.currentAngle}deg)`;
     document.body.appendChild(this.cigarette);
   }
 
@@ -250,15 +253,25 @@ class VirtualCigarette {
     });
   }
 
-  loadSavedAngle() {
+  loadSavedAngleOrDefault() {
     chrome.storage.sync.get(['cigaretteAngle'], (result) => {
-      if (result.cigaretteAngle !== undefined) {
+      console.log('ストレージから読み込んだ角度:', result.cigaretteAngle);
+      console.log('ストレージの全内容:', result);
+      
+      // 初回起動時はデフォルトの270度を使用し、ストレージに保存する
+      if (result.cigaretteAngle === undefined) {
+        console.log('初回起動: デフォルト270度を設定してストレージに保存');
+        this.updateAngle(270);
+        chrome.storage.sync.set({cigaretteAngle: 270});
+      } else {
+        console.log('保存された角度を適用:', result.cigaretteAngle);
         this.updateAngle(result.cigaretteAngle);
       }
     });
   }
 
   updateAngle(angle) {
+    console.log(`updateAngle呼び出し: ${this.currentAngle}度 → ${angle}度`);
     this.currentAngle = angle;
     this.cigarette.style.transform = `rotate(${angle}deg)`;
     console.log(`タバコの角度を${angle}度に変更しました`);
