@@ -183,12 +183,47 @@ class VirtualCigarette {
     const particle = document.createElement('div');
     particle.className = 'smoke-particle';
     
-    // タバコの先端から煙を出す
-    const startX = rect.left + rect.width / 2;
-    const startY = rect.top - 5;
+    // 回転していない状態でのタバコの寸法
+    const originalWidth = 8;
+    const originalHeight = 80;
     
-    particle.style.left = startX + 'px';
-    particle.style.top = startY + 'px';
+    // 回転後のタバコの中心点を取得
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // 回転角度を考慮してタバコの先端位置を計算
+    const angle = this.currentAngle * Math.PI / 180;
+    
+    // 元のタバコの寸法を基準に先端位置を計算
+    // 先端は元のタバコの上端から2px上（::before要素のtop: -2px）
+    const tipDistance = originalHeight / 2 + 2;
+    
+    // 回転を考慮した先端の座標を計算
+    // 0度: 上向き、90度: 右向き、180度: 下向き、270度: 左向き
+    const tipX = centerX + Math.sin(angle) * tipDistance;
+    const tipY = centerY - Math.cos(angle) * tipDistance;
+    
+    particle.style.left = tipX + 'px';
+    particle.style.top = tipY + 'px';
+    
+    // 煙の移動方向は常に上向き（重力と逆方向）を基本とし、少し横にずらす
+    const baseUpwardDistance = 60;
+    const randomSideDistance = (Math.random() - 0.5) * 30; // -15px から +15px のランダム
+    
+    // 煙の最終位置を計算（基本的に上向きに移動）
+    const finalX = tipX + randomSideDistance;
+    const finalY = tipY - baseUpwardDistance;
+    
+    // カスタムアニメーションの設定
+    particle.style.setProperty('--final-x', (finalX - tipX) + 'px');
+    particle.style.setProperty('--final-y', (finalY - tipY) + 'px');
+    
+    console.log(`角度: ${this.currentAngle}度`);
+    console.log(`回転後のタバコ中心: (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+    console.log(`回転後のrect: w=${rect.width.toFixed(1)}, h=${rect.height.toFixed(1)}`);
+    console.log(`計算した先端位置: (${tipX.toFixed(1)}, ${tipY.toFixed(1)})`);
+    console.log(`tipDistance: ${tipDistance}px`);
+    console.log(`---`);
     
     document.body.appendChild(particle);
     

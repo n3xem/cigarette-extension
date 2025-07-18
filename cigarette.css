@@ -65,15 +65,15 @@
 @keyframes smoke-rise {
   0% {
     opacity: 0.7;
-    transform: translateY(0px) translateX(0px) scale(1);
+    transform: translate(0px, 0px) scale(1);
   }
   50% {
     opacity: 0.4;
-    transform: translateY(-30px) translateX(10px) scale(1.5);
+    transform: translate(calc(var(--final-x, 10px) * 0.5), calc(var(--final-y, -30px) * 0.5)) scale(1.5);
   }
   100% {
     opacity: 0;
-    transform: translateY(-60px) translateX(20px) scale(2);
+    transform: translate(var(--final-x, 20px), var(--final-y, -60px)) scale(2);
   }
 }
 
