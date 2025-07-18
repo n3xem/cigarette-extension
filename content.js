@@ -8,6 +8,7 @@ class VirtualCigarette {
     this.smokeInterval = null;
     this.currentAngle = 270;
     this.smokeAmount = 5; // デフォルトの煙の量
+    this.ashParticles = []; // 落とした灰のリスト
     console.log('VirtualCigarette初期化開始, デフォルト角度:', this.currentAngle);
     this.init();
   }
@@ -122,6 +123,18 @@ class VirtualCigarette {
           e.preventDefault();
           this.toggleSmoke();
           console.log('Sキーで煙を出しました/止めました');
+        }
+        // Aキーで灰を落とす
+        if (e.key.toLowerCase() === 'a') {
+          e.preventDefault();
+          this.dropAsh();
+          console.log('Aキーで灰を落としました');
+        }
+        // Cキーで灰をクリア
+        if (e.key.toLowerCase() === 'c') {
+          e.preventDefault();
+          this.clearAllAsh();
+          console.log('Cキーで灰をクリアしました');
         }
       }
     }, true); // キャプチャフェーズで実行
@@ -316,6 +329,92 @@ class VirtualCigarette {
     }
     
     console.log(`煙の量を${amount}に変更しました`);
+  }
+
+  dropAsh() {
+    // 火がついていない場合は灰を落とせない
+    if (!this.isLit) {
+      console.log('火がついていないので灰を落とせません');
+      return;
+    }
+
+    const rect = this.cigarette.getBoundingClientRect();
+    
+    // 回転していない状態でのタバコの寸法
+    const originalWidth = 8;
+    const originalHeight = 80;
+    
+    // 回転後のタバコの中心点を取得
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // 回転角度を考慮してタバコの先端位置を計算
+    const angle = this.currentAngle * Math.PI / 180;
+    const tipDistance = originalHeight / 2 + 2;
+    
+    // 回転を考慮した先端の座標を計算
+    const tipX = centerX + Math.sin(angle) * tipDistance;
+    const tipY = centerY - Math.cos(angle) * tipDistance;
+    
+    // 灰パーティクルを作成
+    this.createAshParticle(tipX, tipY);
+    
+    console.log(`灰を落としました: (${tipX.toFixed(1)}, ${tipY.toFixed(1)})`);
+  }
+
+  createAshParticle(startX, startY) {
+    const particle = document.createElement('div');
+    particle.className = 'ash-particle';
+    
+    particle.style.left = startX + 'px';
+    particle.style.top = startY + 'px';
+    
+    // 落下時の横方向のランダムな動き
+    const randomX = (Math.random() - 0.5) * 20; // -10px から +10px のランダム
+    particle.style.setProperty('--fall-x', randomX + 'px');
+    
+    document.body.appendChild(particle);
+    
+    // 落下アニメーション開始
+    setTimeout(() => {
+      particle.classList.add('falling');
+    }, 10);
+    
+    // 1秒後に地面に着地した灰に変換
+    setTimeout(() => {
+      this.convertToGroundAsh(particle, startX + randomX, startY + 50);
+    }, 1000);
+  }
+
+  convertToGroundAsh(fallingParticle, finalX, finalY) {
+    // 落下中の灰を削除
+    if (fallingParticle.parentNode) {
+      fallingParticle.parentNode.removeChild(fallingParticle);
+    }
+    
+    // 地面の灰を作成
+    const groundAsh = document.createElement('div');
+    groundAsh.className = 'ash-on-ground';
+    
+    groundAsh.style.left = finalX + 'px';
+    groundAsh.style.top = finalY + 'px';
+    
+    document.body.appendChild(groundAsh);
+    
+    // 灰のリストに追加（後でクリアできるように）
+    this.ashParticles.push(groundAsh);
+    
+    console.log(`灰が地面に着地: (${finalX.toFixed(1)}, ${finalY.toFixed(1)})`);
+  }
+
+  clearAllAsh() {
+    this.ashParticles.forEach(ash => {
+      if (ash.parentNode) {
+        ash.parentNode.removeChild(ash);
+      }
+    });
+    this.ashParticles = [];
+    console.log('すべての灰をクリアしました');
   }
 }
 
