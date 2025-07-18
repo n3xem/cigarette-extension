@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Virtual Cigarette",
+  "version": "1.0",
+  "description": "かっこいいタバコを再現して、マウスでグリグリ動かして好きな場所でタバコが吸える拡張機能",
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["cigarette.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["cigarette.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
