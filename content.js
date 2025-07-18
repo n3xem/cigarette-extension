@@ -338,6 +338,32 @@ class VirtualCigarette {
       return;
     }
 
+    // 既にアニメーション中の場合は無視
+    if (this.cigarette.classList.contains('ash-dropping')) {
+      return;
+    }
+
+    console.log('灰落としアニメーションを開始');
+    
+    // 現在の角度をCSS変数に設定
+    this.cigarette.style.setProperty('--original-angle', this.currentAngle + 'deg');
+    
+    // アニメーションクラスを追加
+    this.cigarette.classList.add('ash-dropping');
+    
+    // アニメーションの途中（0.3秒後）で灰を落とす
+    setTimeout(() => {
+      this.performAshDrop();
+    }, 300);
+    
+    // アニメーション終了後（0.6秒後）にクラスを削除
+    setTimeout(() => {
+      this.cigarette.classList.remove('ash-dropping');
+      console.log('灰落としアニメーションを終了');
+    }, 600);
+  }
+
+  performAshDrop() {
     const rect = this.cigarette.getBoundingClientRect();
     
     // 回転していない状態でのタバコの寸法
@@ -348,13 +374,13 @@ class VirtualCigarette {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     
-    // 回転角度を考慮してタバコの先端位置を計算
-    const angle = this.currentAngle * Math.PI / 180;
+    // アニメーション中の角度を考慮（少し傾いた状態）
+    const animationAngle = (this.currentAngle + 15) * Math.PI / 180;
     const tipDistance = originalHeight / 2 + 2;
     
     // 回転を考慮した先端の座標を計算
-    const tipX = centerX + Math.sin(angle) * tipDistance;
-    const tipY = centerY - Math.cos(angle) * tipDistance;
+    const tipX = centerX + Math.sin(animationAngle) * tipDistance;
+    const tipY = centerY - Math.cos(animationAngle) * tipDistance;
     
     // 灰パーティクルを作成
     this.createAshParticle(tipX, tipY);

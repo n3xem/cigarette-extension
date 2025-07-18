@@ -86,6 +86,10 @@
   transform: rotate(5deg);
 }
 
+.virtual-cigarette.ash-dropping {
+  animation: ash-drop-shake 0.6s ease-in-out forwards;
+}
+
 .ash-particle {
   position: fixed;
   width: 3px;
@@ -99,6 +103,21 @@
 
 .ash-particle.falling {
   animation: ash-fall 1s ease-in forwards;
+}
+
+@keyframes ash-drop-shake {
+  0% {
+    transform: rotate(var(--original-angle, 0deg));
+  }
+  30% {
+    transform: rotate(calc(var(--original-angle, 0deg) + 15deg));
+  }
+  60% {
+    transform: rotate(calc(var(--original-angle, 0deg) - 10deg));
+  }
+  100% {
+    transform: rotate(var(--original-angle, 0deg));
+  }
 }
 
 @keyframes ash-fall {
